@@ -1,0 +1,111 @@
+version: '3.3'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:14.1
+    restart: always
+    environment:
+      - POSTGRES_USER=<postgres_username>
+      - POSTGRES_PASSWORD=<postgres_password>
+      - POSTGRES_DB=postgres
+    ports:
+      - '5432:5432'
+    volumes: 
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - application
+
+  redis:
+      container_name: redis
+      image: redis:6.2.5-alpine
+      command: redis-server --appendonly yes
+      ports:
+        - 6379:6379
+      volumes:
+        - redis:/var/lib/redis/dat
+      networks:
+      - application
+
+  backend: &django
+    container_name: backend
+    image: ${REGISTRY_URL}/backend-service:${BE_TAG}
+    command: /app/docker/start.sh server
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ./backend-service/.env
+    ports:
+      - 8000:8000
+    networks:
+      - application
+
+  scheduler:
+    <<: *django
+    container_name: scheduler
+    command: /app/docker/start.sh beat
+    depends_on:
+      - backend
+      - postgres
+      - redis
+    ports:
+      - 8001:8000
+
+  worker1:
+    <<: *django
+    container_name: worker1
+    command: /app/docker/start.sh worker
+    depends_on:
+      - backend
+      - postgres
+      - redis
+      - scheduler
+    ports:
+      - 8002:8000
+
+  frontend:
+    container_name: frontend
+    image: ${REGISTRY_URL}/frontend-service:${FE_TAG}
+    env_file:
+      - ./frontend-service/.env
+    ports:
+      - 7000:80
+    networks:
+      - application
+
+  nginx: 
+    container_name: nginx
+    image: nginx:latest
+    restart: always
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+    networks:
+      - application
+
+  ## Guide : https://mindsers.blog/post/https-using-nginx-certbot-docker/
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+
+volumes:
+  postgres:
+    driver: local
+  redis:
+    driver: local
+
+networks:
+  application:
+    external: false
