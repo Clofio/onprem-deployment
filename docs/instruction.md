@@ -14,6 +14,12 @@ Instruction to run Clofio on-premise inside virtual machine
 ## How to setup
 - SSH into virtual machine using provided auth
 
+- Run the below commands to clone onprem deployment template repo and use it
+    ```
+    git clone https://github.com/Clofio/onprem-deployment.git
+    cd onprem-deployment
+    ```
+
 - Install Docker Engine using `/installer/install-docker-in-ubuntu.sh` (if not already installed)
 
 - If using external PostgreSQL DB and Redis Cache, remove/comment them in `/template/docker-compose.yaml` (line #4-#28)
@@ -45,7 +51,9 @@ Instruction to run Clofio on-premise inside virtual machine
     docker-compose up -d
     ```
 
-- The setup uses LetsEncrypt to configure SSL certificate for the given `subdomain.domain.com`. To renew the certificate every 3 months, run below
+- The setup uses LetsEncrypt to configure SSL certificate for the given `subdomain.domain.com`
+
+    To renew the certificate every 3 months, run below
 
     `$ docker-compose run --rm certbot renew`
 
