@@ -38,16 +38,31 @@ Instruction to run Clofio on-premise inside virtual machine
 
     `/template/frontend-service/.env`
 
-- Run below commands in sequence to spawn up Clofio deployment
+- Go to `/template/nginx/conf/default.conf` and comment out lines #26-#57
+
+- Run below commands in sequence to temporarily start the nginx and obtain the SSL certificate. Make sure to update the `subdomain.domain.com` part at the end in last command
     ```
     cd template
     
     export REGISTRY_URL=<registry_url>
     export BE_TAG=<backend_service_tag>
     export FE_TAG=<frontend_service_tag>
+    export DOCU_TAG=<documentation_tag>
+
+    docker-compose up -d
 
     docker-compose run --rm  certbot certonly --webroot --webroot-path /var/www/certbot/ -d subdomain.domain.com
+    ```
 
+- Once SSL certificate is obtained, shut down the deployment by running below
+    ```
+    docker-compose down
+    ```
+
+- Go to `/template/nginx/conf/default.conf` and un-comment lines #26-#57
+
+- Deploy the cluster now by running below 
+    ```
     docker-compose up -d
     ```
 

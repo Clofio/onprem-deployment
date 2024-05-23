@@ -74,6 +74,14 @@ services:
     networks:
       - application
 
+  documentation:
+    container_name: documentation
+    image: ${REGISTRY_URL}/starmap:${DOCU_TAG}
+    ports:
+      - 6000:3000
+    networks:
+      - application
+
   nginx: 
     container_name: nginx
     image: nginx:latest
